@@ -1,3 +1,5 @@
+//This class is for Part 1 of the programming assignment: Single pixels as features
+
 #pragma once
 class naiveBayesDigitClassifier
 {

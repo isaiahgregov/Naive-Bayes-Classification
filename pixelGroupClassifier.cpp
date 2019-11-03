@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "naiveBayesDigitClassifier.h"
+#include "pixelGroupClassifier.h"
 #include <iostream>
 #include <chrono> 
 #include <iostream>
@@ -16,9 +16,101 @@ using namespace std;
 //--------------Constructors and Destructor-------------------------------------*
 //*******************************************************************************
 
-naiveBayesDigitClassifier::naiveBayesDigitClassifier(double fSmoothingConstant)
+pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatureSet)
 {
 	smoothingConstant = fSmoothingConstant;
+
+	featureSet = fFeatureSet;
+
+	featureSetDisjoint = false;
+	featureSetOverlapping = false;
+
+	/*
+	Feature sets correspond to:
+
+	1.  Disjoint pixel groups of size 2*2
+	2.  Disjoint pixel groups of size 2*4
+	3.  Disjoint pixel groups of size 4*2
+	4.  Disjoint pixel groups of size 4*4
+	5.  Overlapping pixel groups of size 2*2
+	6.  Overlapping pixel groups of size 2*4
+	7.  Overlapping pixel groups of size 4*2
+	8.  Overlapping pixel groups of size 4*4
+	9.  Overlapping pixel groups of size 2*3
+	10. Overlapping pixel groups of size 3*2
+	11. Overlapping pixel groups of size 3*3
+	*/
+
+	switch (featureSet)
+	{
+	case 1:
+		n = 2;
+		m = 2;
+		featureSetDisjoint = true;
+
+		break;
+	case 2:
+		n = 2;
+		m = 4;
+		featureSetDisjoint = true;
+
+		break;
+	case 3:
+		n = 4;
+		m = 2;
+		featureSetDisjoint = true;
+
+		break;
+	case 4:
+		n = 4;
+		m = 4;
+		featureSetDisjoint = true;
+
+		break;
+	case 5:
+		n = 2;
+		m = 2;
+		featureSetOverlapping = true;
+
+		break;
+	case 6:
+		n = 2;
+		m = 4;
+		featureSetOverlapping = true;
+
+		break;
+	case 7:
+		n = 4;
+		m = 2;
+		featureSetOverlapping = true;
+
+		break;
+	case 8:
+		n = 4;
+		m = 4;
+		featureSetOverlapping = true;
+
+		break;
+	case 9:
+		n = 2;
+		m = 3;
+		featureSetOverlapping = true;
+
+		break;
+	case 10:
+		n = 3;
+		m = 2;
+		featureSetOverlapping = true;
+
+		break;
+	case 11:
+		n = 3;
+		m = 3;
+		featureSetOverlapping = true;
+
+		break;
+	}
+
 	totalClassificationRate = 0;
 
 	for (int i = 0; i < 10; i++)
@@ -59,17 +151,9 @@ naiveBayesDigitClassifier::naiveBayesDigitClassifier(double fSmoothingConstant)
 	{
 		numOfTestExamples[i] = 0;
 	}
-
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			confusionMatrix[i][j] = 0;
-		}
-	}
 }
 
-naiveBayesDigitClassifier::~naiveBayesDigitClassifier()
+pixelGroupClassifier::~pixelGroupClassifier()
 {
 }
 
@@ -77,15 +161,15 @@ naiveBayesDigitClassifier::~naiveBayesDigitClassifier()
 //--------------Public Functions------------------------------------------------*
 //*******************************************************************************
 
-void naiveBayesDigitClassifier::trainModel()
+void pixelGroupClassifier::trainModel()
 {
 	//A temporary array of twenty - eight(28) 28 - char - length strings to update the pixelCountMatrices
 	char nextTrainingImage[28][28];
 
 	int nextLabel;
 
-	//An array of ten(10) 28 x 28 float - type matrices to keep count of the number of times a pixel is 
-	//“in the foreground” / “counts” for a digit, for each digit.Each element of this array corresponds
+	//An array of ten(10) 28 x 28 float-type matrices to keep count of the number of times a pixel is 
+	//“in the foreground” / “counts” for a digit, for each digit. Each element of this array corresponds
 	//to each digit from 0 - 9. It is a float or double type for laplace smoothing.
 	double pixelCountMatrices[10][28][28];
 
@@ -197,7 +281,7 @@ void naiveBayesDigitClassifier::trainModel()
 		/*
 		Loop 10 times:
 		For each loop, update each digit in priorProbability : priorProbability[loop number]
-			= numOfTrainingExamples[loop number] / 5000		
+			= numOfTrainingExamples[loop number] / 5000
 		*/
 
 		for (int j = 0; j < 10; j++)
@@ -211,7 +295,7 @@ void naiveBayesDigitClassifier::trainModel()
 	dataFileInTrainingLabels.close();
 }
 
-void naiveBayesDigitClassifier::testModel()
+void pixelGroupClassifier::testModel()
 {
 	//A temporary array of twenty - eight(28) 28 - char - length strings to find that image’s posterior probability
 	char nextTestImage[28][28];
@@ -349,7 +433,7 @@ void naiveBayesDigitClassifier::testModel()
 //--------------Private Functions-----------------------------------------------*
 //*******************************************************************************
 
-void naiveBayesDigitClassifier::evaluateModel()
+void pixelGroupClassifier::evaluateModel()
 {
 	int numTotalTestDigitsCorrect = 0;
 	int numEachTestDigitCorrect[10];
@@ -378,16 +462,6 @@ void naiveBayesDigitClassifier::evaluateModel()
 			numTotalTestDigitsCorrect += 1;
 			numEachTestDigitCorrect[testLabels[i]] += 1;
 		}
-
-		confusionMatrix[testLabels[i]][locOfMax] += 1;
-	}
-	
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			confusionMatrix[i][j] = confusionMatrix[i][j] / (double)numOfTestExamples[i];
-		}
 	}
 
 	totalClassificationRate = (double)numTotalTestDigitsCorrect / 1000.0;
@@ -398,13 +472,7 @@ void naiveBayesDigitClassifier::evaluateModel()
 	}
 }
 
-void naiveBayesDigitClassifier::printEvaluation()
-{
-	printClassificationRateAndConfusionMatrix();
-	printFeatureLikelihoodsAndOddsRatios();
-}
-
-void naiveBayesDigitClassifier::printClassificationRateAndConfusionMatrix()
+void pixelGroupClassifier::printEvaluation()
 {
 	/*
 	Print to screen totalClassificationRate, digitClassificationRate[] for each digit, and confusionMatrix.
@@ -426,324 +494,4 @@ void naiveBayesDigitClassifier::printClassificationRateAndConfusionMatrix()
 	cout << "Digit 8 classification rate: " << digitClassificationRate[8] << endl;
 	cout << "Digit 9 classification rate: " << digitClassificationRate[9] << endl;
 	cout << endl;
-
-	cout << "Confusion matrix, where the entry in row r and column c is the percentage of\n"
-		<< "test images from class r that are classified as class c:\n\n";
-
-	cout << setprecision(2) << fixed;
-
-	cout << "\t\t\t\t      Digits\n\t\t  0    1    2    3    4    5    6    7    8    9\n"
-		<< "\t\t" << string(50, '-') << endl;
-
-	for (int i = 0; i < 10; i++)
-	{
-		cout << "Digit " << i << ":\t";
-
-		for (int j = 0; j < 10; j++)
-		{
-			cout << confusionMatrix[i][j] << " ";
-		}
-
-		cout << endl;
-	}
-
-	cout << endl << endl << endl;
-
-	/*
-	For each digit class, print to screen the test examples from that class that have the
-	highest and the lowest posterior probabilities according to the classifier:
-	Iterate through testDigitProbability to find the highest and lowest posterior
-	probability for each digit. Ties don’t matter but probably are unlikely; the next one
-	would just be picked in place of the previous one.
-	*/
-
-	double testDigitMaxProbability[10];
-	double testDigitMinProbability[10];
-
-	for (int i = 0; i < 10; i++)
-	{
-		testDigitMaxProbability[i] = 0.0;
-		testDigitMinProbability[i] = 1.0;
-	}
-
-	int testDigitMaxProbabilityLoc[10];
-	int testDigitMinProbabilityLoc[10];
-	
-	/*
-	Loop 10 times(i) :
-		Loop 1000 times(j) :
-			If testDigitProbability[j][i] > testDigitMaxProbability[i]:
-				testDigitMaxProbability[i] = testDigitProbability[j][i]
-				testDigitMaxProbabilityLoc[i] = j
-			If testDigitProbability[j][i] < testDigitMinProbability[i] :
-				testDigitMinProbability[i] = testDigitProbability[j][i]
-				testDigitMinProbabilityLoc[i] = j
-	Loop 10 times(i):
-		Note: The following steps were modified to make the images with the highest and lowest probabilities appear
-		next to each other instead of vertically above and below each other, but at least, if you know this, the same
-		principle applies: to output the images with the highest and lowest probability for the user to see.
-		Open test images file.
-		Print “Image with highest probability for digit “ + i + “ : \n\n”
-		Read in / skip past the next 28 * testDigitMaxProbabilityLoc[i].Then print the next 28 lines.
-		Close test images file and open it again(or bring it back to the beginning somehow—depending on the programming language…)
-		Print “Image with lowest probability for digit “ + i + “:\n\n”
-		Read in / skip past the next 28 * testDigitMinProbabilityLoc[i].Then print the next 28 lines.
-		Close test images file.
-	*/
-
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 1000; j++)
-		{
-			if (testDigitProbability[j][i] > testDigitMaxProbability[i])
-			{
-				testDigitMaxProbability[i] = testDigitProbability[j][i];
-				testDigitMaxProbabilityLoc[i] = j;
-			}
-			else if (testDigitProbability[j][i] < testDigitMinProbability[i])
-			{
-				testDigitMinProbability[i] = testDigitProbability[j][i];
-				testDigitMinProbabilityLoc[i] = j;
-			}
-		}
-	}
-
-	cout << "Test examples from each class that have the highest and the lowest posterior probabilities:\n"
-		<< string(100, '-') << endl << endl;
-
-	for (int i = 0; i < 10; i++)
-	{
-		//Open data file.
-		ifstream dataFileInTestImagesForHighestProb;
-		ifstream dataFileInTestImagesForLowestProb;
-		dataFileInTestImagesForHighestProb.open("testimages");
-		dataFileInTestImagesForLowestProb.open("testimages");
-
-		//Strings for processing input from data file.
-		string nextLine1, nextLine2;
-
-		cout << "Image with highest probability for digit " << i
-			<< ":\t\tImage with lowest probability for digit " << i << ":\n"
-			<< "Probability: "
-			<< testDigitProbability[testDigitMaxProbabilityLoc[i]][i]
-			<< "\t\t\t\t\tProbability: "
-			<< testDigitProbability[testDigitMinProbabilityLoc[i]][i];
-
-		for (int j = 0; j < (28 * testDigitMaxProbabilityLoc[i]); j++)
-		{
-			getline(dataFileInTestImagesForHighestProb, nextLine1);
-		}
-
-		for (int j = 0; j < (28 * testDigitMinProbabilityLoc[i]); j++)
-		{
-			getline(dataFileInTestImagesForLowestProb, nextLine2);
-		}
-
-		for (int j = 0; j < 28; j++)
-		{
-			getline(dataFileInTestImagesForHighestProb, nextLine1);
-			getline(dataFileInTestImagesForLowestProb, nextLine2);
-
-			cout << nextLine1 << "\t\t\t\t\t" << nextLine2 << endl;
-		}
-
-		//Close data files.
-		dataFileInTestImagesForHighestProb.close();
-		dataFileInTestImagesForLowestProb.close();
-	}
-
-	cout << endl << endl << endl;
-}
-
-void naiveBayesDigitClassifier::printFeatureLikelihoodsAndOddsRatios()
-{
-	double pixelOdds[10][10][28][28];
-
-	//The odds that a pixel belongs to one or the other class:
-	//odds(Fij = 1, c1, c2) = P(Fij = 1 | c1) / P(Fij = 1 | c2)
-
-	int max1Row;
-	int max1Col;
-	int max2Row;
-	int max2Col;
-	int max3Row;
-	int max3Col;
-	int max4Row;
-	int max4Col;
-	double confusionMax1 = 0.0;
-	double confusionMax2 = 0.0;
-	double confusionMax3 = 0.0;
-	double confusionMax4 = 0.0;
-
-	//Find four pairs of digits that have the highest confusion rates according to the confusion matrix.
-
-	/*
-	Loop 4 times(i) :
-		Loop 10 times(j) :
-			Loop 10 times(k) :
-				If i = 1 :
-					If confusionMatrix[j][k] > confusionMax1:
-						confusionMax1 = confusionMatrix[j][k]
-						max1Row = j
-						max1Col = k
-				Else if i = 2 :
-					If confusionMatrix[j][k] > confusionMax2and < confusionMax1:
-						confusionMax2 = confusionMatrix[j][k]
-						max2Row = j
-						max2Col = k
-				Else if i = 3 :
-					If confusionMatrix[j][k] > confusionMax3and < confusionMax2:
-						confusionMax3 = confusionMatrix[j][k]
-						max3Row = j
-						max3Col = k
-				Else if i = 4 :
-					If confusionMatrix[j][k] > confusionMax4and < confusionMax2:
-						confusionMax4 = confusionMatrix[j][k]
-						max4Row = j
-						max4Col = k
-	*/
-
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			for (int k = 0; k < 10; k++)
-			{
-				switch (i)
-				{
-					case 0:
-						if (confusionMatrix[j][k] > confusionMax1 && j != k)
-						{
-							confusionMax1 = confusionMatrix[j][k];
-							max1Row = j;
-							max1Col = k;
-						}
-						
-						break;
-					case 1:
-						if (confusionMatrix[j][k] > confusionMax2 && confusionMatrix[j][k] < confusionMax1 && j != k)
-						{
-							confusionMax2 = confusionMatrix[j][k];
-							max2Row = j;
-							max2Col = k;
-						}
-
-						break;
-					case 2:
-						if (confusionMatrix[j][k] > confusionMax3 && confusionMatrix[j][k] < confusionMax2 && j != k)
-						{
-							confusionMax3 = confusionMatrix[j][k];
-							max3Row = j;
-							max3Col = k;
-						}
-
-						break;
-					case 3:
-						if (confusionMatrix[j][k] > confusionMax4 && confusionMatrix[j][k] < confusionMax3 && j != k)
-						{
-							confusionMax4 = confusionMatrix[j][k];
-							max4Row = j;
-							max4Col = k;
-						}
-
-						break;
-				}
-			}
-		}
-	}
-
-	//Find pixelOdds.
-
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 10; j++)
-		{
-			for (int k = 0; k < 28; k++)
-			{
-				for (int l = 0; l < 28; l++)
-				{
-					pixelOdds[i][j][k][l] = pixelProbability[i][k][l] / pixelProbability[j][k][l];
-				}
-			}
-		}
-	}
-
-	/*
-	For each pair, display the maps of feature likelihoods for both classes as well as the odds
-	ratio for the two classes. If you cannot do a graphical display, you can display the maps in
-	ASCII format using some coding scheme of your choice. For example, for the odds ratio map,
-	you can use '+' to denote features with positive log odds, ' ' for features with log odds
-	close to 1, and '-' for features with negative log odds.
-	*/
-
-	displayFeatureLikelihoodsAndOddsRatiosMaps(pixelOdds, max1Row, max1Col);
-	displayFeatureLikelihoodsAndOddsRatiosMaps(pixelOdds, max2Row, max2Col);
-	displayFeatureLikelihoodsAndOddsRatiosMaps(pixelOdds, max3Row, max3Col);
-	displayFeatureLikelihoodsAndOddsRatiosMaps(pixelOdds, max4Row, max4Col);
-}
-
-void naiveBayesDigitClassifier::displayFeatureLikelihoodsAndOddsRatiosMaps(double pixelOdds[10][10][28][28], int maxRow, int maxCol)
-{
-	cout << "Feature likelihood for digit " << maxRow << ":\t\t"
-		<< "Feature likelihood for digit " << maxCol << ":\t\t"
-		<< "Odds ratios for digits " << maxRow << " (+) and " << maxCol << " (-):\n\n";
-
-	for (int i = 0; i < 28; i++)
-	{
-		for (int j = 0; j < 28; j++)
-		{
-			if (pixelProbability[maxRow][i][j] > 0.65)
-			{
-				cout << "+";
-			}
-			else if (pixelProbability[maxRow][i][j] < 0.25)
-			{
-				cout << "-";
-			}
-			else
-			{
-				cout << " ";
-			}
-		}
-
-		cout << "\t\t";
-
-		for (int j = 0; j < 28; j++)
-		{
-			if (pixelProbability[maxCol][i][j] > 0.65)
-			{
-				cout << "+";
-			}
-			else if (pixelProbability[maxCol][i][j] < 0.25)
-			{
-				cout << "-";
-			}
-			else
-			{
-				cout << " ";
-			}
-		}
-
-		cout << "\t\t";
-
-		for (int j = 0; j < 28; j++)
-		{
-			if (pixelOdds[maxRow][maxCol][i][j] > 1.4)
-			{
-				cout << "+";
-			}
-			else if (pixelOdds[maxRow][maxCol][i][j] < 0.6)
-			{
-				cout << "-";
-			}
-			else
-			{
-				cout << " ";
-			}
-		}
-
-		cout << endl;
-	}
-
-	cout << endl << endl << endl;
 }
