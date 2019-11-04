@@ -316,14 +316,12 @@ void naiveBayesDigitClassifier::testModel()
 				}
 			}
 
-			testDigitProbability[i][j] = pixelProduct + log(priorProbability[j]);
+			testDigitProbability[i][j] = pixelProduct - log(priorProbability[j]);
 
 			if (testDigitProbability[i][j] > maxLog)
 			{
 				maxLog = testDigitProbability[i][j];
 			}
-
-			testDigitProbability[i][j] = testDigitProbability[i][j];
 		}
 	}
 

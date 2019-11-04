@@ -11,30 +11,34 @@ class pixelGroupClassifier
 {
 private:
 	double smoothingConstant;
-	
+
 	//See below to see which numbers correspond to which feature sets.
 	int featureSet;
 
-	int n, m;
-	
+	int m, n;
+
 	bool featureSetDisjoint = false;
 	bool featureSetOverlapping = false;
 
-	//Ten(10) 28 x 28 arrays that records the probability that the i * j - th pixel belongs to a digit,
+	//Ten (10) … x … x 2^(m * n)) arrays that records the probability that the i*j-th pixel group belongs to a digit,
 	//where each digit corresponds to one of the ten arrays.
-	double pixelProbability[10][28][28];
+	//If disjoint:
+	//	double pixelGroupProbability[10][28 / m][28 / n)];
+	//Else if overlapping:
+	//	double pixelGroupProbability[10][29 – m][29 – n)];
+	double**** pixelGroupProbability = new double*** [10];
 
-	//An array of ten(10) double values, where each value is the prior class probability.The prior class
+	//An array of ten (10) double values, where each value is the prior class probability. The prior class
 	//is the digit. This is found by dividing the number of training examples per digit by 5000, for each digit.
+	//Note: From training digits
 	double priorProbability[10];
 
 	//An array of 1000 x 10 double values, where each value corresponds to the posterior probability
 	//for that digit (one of the 10 digits) for each test digit (each of the 1000 test digits)
-	double testDigitProbability[1000][10];
+	//Note: From test digits
+	double posteriorProbability[1000][10];
 
 	//A 1000 int array to hold the test labels(and therefore the correct answers for the test data)
-	//Note : May have to initialize this array or any other arrays or static objects to 0 for each element,
-	//depending on programming language.
 	int testLabels[1000];
 
 	//A double value that is used to record the model’s classification success rate of the test digits
@@ -49,6 +53,7 @@ private:
 
 	void evaluateModel();
 	void printEvaluation();
+	int getPixelGroupNumber(char nextTrainingImage[28][28], int topLeftRow, int topLeftCol);
 
 public:
 	/*

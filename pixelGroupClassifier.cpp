@@ -1,15 +1,12 @@
 ﻿#pragma once
 #include "pixelGroupClassifier.h"
 #include <iostream>
-#include <chrono> 
-#include <iostream>
 #include <fstream>
 #include <string> //to capture user input for error-checking
 #include <sstream> //stringstream
 #include <iomanip> //set precision
-#include <math.h> //log
+#include <math.h> //log and pow functions
 
-using namespace std::chrono;
 using namespace std;
 
 //*******************************************************************************
@@ -44,85 +41,74 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 	switch (featureSet)
 	{
 	case 1:
-		n = 2;
 		m = 2;
+		n = 2;
 		featureSetDisjoint = true;
 
 		break;
 	case 2:
-		n = 2;
-		m = 4;
+		m = 2;
+		n = 4;
 		featureSetDisjoint = true;
 
 		break;
 	case 3:
-		n = 4;
-		m = 2;
+		m = 4;
+		n = 2;
 		featureSetDisjoint = true;
 
 		break;
 	case 4:
-		n = 4;
 		m = 4;
+		n = 4;
 		featureSetDisjoint = true;
 
 		break;
 	case 5:
-		n = 2;
 		m = 2;
+		n = 2;
 		featureSetOverlapping = true;
 
 		break;
 	case 6:
-		n = 2;
-		m = 4;
+		m = 2;
+		n = 4;
 		featureSetOverlapping = true;
 
 		break;
 	case 7:
-		n = 4;
-		m = 2;
+		m = 4;
+		n = 2;
 		featureSetOverlapping = true;
 
 		break;
 	case 8:
-		n = 4;
 		m = 4;
+		n = 4;
 		featureSetOverlapping = true;
 
 		break;
 	case 9:
-		n = 2;
-		m = 3;
+		m = 2;
+		n = 3;
 		featureSetOverlapping = true;
 
 		break;
 	case 10:
-		n = 3;
-		m = 2;
+		m = 3;
+		n = 2;
 		featureSetOverlapping = true;
 
 		break;
 	case 11:
-		n = 3;
 		m = 3;
+		n = 3;
 		featureSetOverlapping = true;
 
 		break;
 	}
 
 	totalClassificationRate = 0;
-
-	for (int i = 0; i < 10; i++)
-	{
-		for (int j = 0; j < 28; j++)
-		{
-			for (int k = 0; k < 28; k++)
-			{
-				pixelProbability[i][j][k] = 0;
-			}
-		}
-	}
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -133,7 +119,7 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 	{
 		for (int j = 0; j < 10; j++)
 		{
-			testDigitProbability[i][j] = 0;
+			posteriorProbability[i][j] = 0;
 		}
 	}
 
@@ -151,10 +137,108 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 	{
 		numOfTestExamples[i] = 0;
 	}
+
+	//Dynamically allocate the rest of the 3D array.
+	for (int i = 0; i < 10; i++)
+	{
+		if (featureSetDisjoint == true)
+		{
+			pixelGroupProbability[i] = new double** [28 / m];
+
+			for (int j = 0; j < (28 / m); j++)
+			{
+				pixelGroupProbability[i][j] = new double* [28 / n];
+
+				for (int k = 0; k < (28 / n); k++)
+				{
+					pixelGroupProbability[i][j][k] = new double [pow(2, (m * n))];
+				}
+			}
+		}
+		else if (featureSetOverlapping == true)
+		{
+			pixelGroupProbability[i] = new double** [29 - m];
+
+			for (int j = 0; j < (29 - m); j++)
+			{
+				pixelGroupProbability[i][j] = new double* [29 - n];
+
+				for (int k = 0; k < (29 - n); k++)
+				{
+					pixelGroupProbability[i][j][k] = new double[pow(2, (m * n))];
+				}
+			}
+		}
+	}
+
+	//Assign values to allocated memory.
+	for (int i = 0; i < 10; i++)
+	{
+		if (featureSetDisjoint == true)
+		{
+			for (int i = 0; i < 10; i++)
+				for (int j = 0; j < (28 / m); j++)
+					for (int k = 0; k < (28 / n); k++)
+						for (int l = 0; l < pow(2, (m * n)); l++)
+							pixelGroupProbability[i][j][k][l] = 0;
+		}
+		else if (featureSetOverlapping == true)
+		{
+			for (int i = 0; i < 10; i++)
+				for (int j = 0; j < (29 - m); j++)
+					for (int k = 0; k < (29 - n); k++)
+						for (int l = 0; l < pow(2, (m * n)); l++)
+							pixelGroupProbability[i][j][k][l] = 0;
+		}
+	}
 }
 
 pixelGroupClassifier::~pixelGroupClassifier()
 {
+	//Deallocate memory.
+	if (featureSetDisjoint == true)
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < (28 / m); j++)
+			{
+				for (int k = 0; k < (28 / n); k++)
+				{
+					delete[] pixelGroupProbability[i][j][k];
+					pixelGroupProbability[i][j][k] = NULL;
+				}
+
+				delete[] pixelGroupProbability[i][j];
+				pixelGroupProbability[i][j] = NULL;
+			}
+
+			delete[] pixelGroupProbability[i];
+			pixelGroupProbability[i] = NULL;
+		}
+	}
+	else if (featureSetOverlapping == true)
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < (29 - m); j++)
+			{
+				for (int k = 0; k < (29 - n); k++)
+				{
+					delete[] pixelGroupProbability[i][j][k];
+					pixelGroupProbability[i][j][k] = NULL;
+				}
+
+				delete[] pixelGroupProbability[i][j];
+				pixelGroupProbability[i][j] = NULL;
+			}
+
+			delete[] pixelGroupProbability[i];
+			pixelGroupProbability[i] = NULL;
+		}
+	}
+
+	delete[] pixelGroupProbability;
+	pixelGroupProbability = NULL;
 }
 
 //*******************************************************************************
@@ -163,28 +247,71 @@ pixelGroupClassifier::~pixelGroupClassifier()
 
 void pixelGroupClassifier::trainModel()
 {
-	//A temporary array of twenty - eight(28) 28 - char - length strings to update the pixelCountMatrices
+	//A temporary array of twenty-eight (28) 28 char-length strings to update the pixelCountMatrices
 	char nextTrainingImage[28][28];
 
 	int nextLabel;
 
-	//An array of ten(10) 28 x 28 float-type matrices to keep count of the number of times a pixel is 
+	//An array of ten (10) ... x ... x 16 float-type matrices to keep count of the number of times a pixel group is 
 	//“in the foreground” / “counts” for a digit, for each digit. Each element of this array corresponds
 	//to each digit from 0 - 9. It is a float or double type for laplace smoothing.
-	double pixelCountMatrices[10][28][28];
+	double**** pixelGroupCountMatrices = new double*** [10];
 
+	//Dynamically allocate the rest of the 3D array.
 	for (int i = 0; i < 10; i++)
 	{
-		for (int j = 0; j < 28; j++)
+		if (featureSetDisjoint == true)
 		{
-			for (int k = 0; k < 28; k++)
+			pixelGroupCountMatrices[i] = new double** [28 / m];
+
+			for (int j = 0; j < (28 / m); j++)
 			{
-				pixelCountMatrices[i][j][k] = 0;
+				pixelGroupCountMatrices[i][j] = new double* [28 / n];
+
+				for (int k = 0; k < (28 / n); k++)
+				{
+					pixelGroupCountMatrices[i][j][k] = new double[pow(2, (m * n))];
+				}
+			}
+		}
+		else if (featureSetOverlapping == true)
+		{
+			pixelGroupCountMatrices[i] = new double** [29 - m];
+
+			for (int j = 0; j < (29 - m); j++)
+			{
+				pixelGroupCountMatrices[i][j] = new double* [29 - n];
+
+				for (int k = 0; k < (29 - n); k++)
+				{
+					pixelGroupCountMatrices[i][j][k] = new double[pow(2, (m * n))];
+				}
 			}
 		}
 	}
 
-	//A ten(10) - element array that keeps count of the number of training examples for each digit, which
+	//Assign values to allocated memory.
+	for (int i = 0; i < 10; i++)
+	{
+		if (featureSetDisjoint == true)
+		{
+			for (int i = 0; i < 10; i++)
+				for (int j = 0; j < (28 / m); j++)
+					for (int k = 0; k < (28 / n); k++)
+						for (int l = 0; l < pow(2, (m * n)); l++)
+							pixelGroupCountMatrices[i][j][k][l] = 0;
+		}
+		else if (featureSetOverlapping == true)
+		{
+			for (int i = 0; i < 10; i++)
+				for (int j = 0; j < (29 - m); j++)
+					for (int k = 0; k < (29 - n); k++)
+						for (int l = 0; l < pow(2, (m * n)); l++)
+							pixelGroupCountMatrices[i][j][k][l] = 0;
+		}
+	}
+
+	//A ten (10) - element array that keeps count of the number of training examples for each digit, which
 	//corresponds to each element of the array.
 	int numOfTrainingExamples[10];
 
@@ -199,18 +326,18 @@ void pixelGroupClassifier::trainModel()
 			Read in next 28 lines from digit data training images file into nextTrainingImage.
 			Read in the next digit from the training labels file into nextLabel.
 			numOfTrainingExamples[nextLabel] += 1;
-			For each i*j-th element that contains the char character “+” or “#” in nextTrainingImage,
-			increment the element for pixelCountMatrices[nextLabel] by one (1).
-		Loop 28 x 28 x 10 = 7840 times(Or do a double loop, the first 10 times, the second 28 x 28 times…):
-			Update pixelProbability for each pixel counted in pixelCountMatrices for each digitand laplace smooth,
-			implementing the conditional probability formula, where P(Fij | class) is updated in pixelProbability:
-				P(pixelij | class) = (# of times pixel(i, j) is counted in training examples from this
-				class = pixelCountMatrices[digit being classified(determined by the loop number)])
+			For each pixel group element that contains one of the m x n char combinations in nextTrainingImage,
+			increment the element for pixelGroupCountMatrices[nextLabel][...][...][pixelGroupNumber] by one (1).
+		Loop 10 x ... x ... 2^(m * n) times:
+			Update pixelGroupProbability for each pixel group counted in pixelGroupCountMatrices for each digit and laplace smooth,
+			implementing the conditional probability formula, where P(Gij | class) is updated in pixelProbability:
+				P(pixelGroupij | class) = (# of times pixelGroup(i, j) is counted in training examples from this
+				class = pixelGroupCountMatrices[digit being classified(determined by the loop number)])
 				+ smoothingConstant / (Total # of training examples from this class =
 				numOfTrainingExamples[digit being classified(determined by the loop number)] + 2 * smoothingConstant)
 		Loop 10 times:
-			For each loop, update each digit in priorProbability : priorProbability[loop number]
-			= numOfTrainingExamples[loop number] / 5000
+			For each loop, update each digit in priorProbability:
+			priorProbability[loop number] = numOfTrainingExamples[loop number] / 5000
 	*/
 
 	//Open data files.
@@ -242,46 +369,79 @@ void pixelGroupClassifier::trainModel()
 
 		numOfTrainingExamples[nextLabel] += 1;
 
-		//For each i* j-th element that contains the char character “+” or “#” in nextTrainingImage,
-		//increment the element for pixelCountMatrices[nextLabel] by one(1).
-		for (int j = 0; j < 28; j++)
+		//For each pixel group element that contains one of the m x n char combinations in nextTrainingImage,
+		//increment the element for pixelGroupCountMatrices[nextLabel][...][...][pixelGroupNumber] by one (1).
+		if (featureSetDisjoint == true)
 		{
-			for (int k = 0; k < 28; k++)
+			for (int j = 0; j < (28 / m); j++)
 			{
-				if (nextTrainingImage[j][k] == '+' || nextTrainingImage[j][k] == '#')
+				for (int k = 0; k < (28 / n); k++)
 				{
-					pixelCountMatrices[nextLabel][j][k] += 1;
+					pixelGroupCountMatrices[nextLabel][j][k][getPixelGroupNumber(nextTrainingImage, (j * m), (k * n))] += 1;
+				}
+			}
+		}
+		else if (featureSetOverlapping == true)
+		{
+			for (int j = 0; j < (29 - m); j++)
+			{
+				for (int k = 0; k < (29 - n); k++)
+				{
+					pixelGroupCountMatrices[nextLabel][j][k][getPixelGroupNumber(nextTrainingImage, j, k)] += 1;
 				}
 			}
 		}
 
 		/*
-		Loop 28 x 28 x 10 = 7840 times(Or do a double loop, the first 10 times, the second 28 x 28 times…):
-			Update pixelProbability for each pixel counted in pixelCountMatrices for each digit and laplace smooth,
-			implementing the conditional probability formula, where P(Fij | class) is updated in pixelProbability:
+		Loop 10 x ... x ... x 2^(m * n) times:
+			Update pixelGroupProbability for each pixel group counted in pixelGroupCountMatrices for each digit and laplace smooth,
+			implementing the conditional probability formula, where P(Gij | class) is updated in pixelGroupProbability:
 
-				P(pixelij | class) = (# of times pixel(i, j) is counted in training examples from this
-				class = pixelCountMatrices[digit being classified(determined by the loop number)])
+				P(pixelGroupij | class) = (# of times pixel(i, j) is counted in training examples from this
+				class = pixelGroupCountMatrices[digit being classified(determined by the loop number)])
 				+ smoothingConstant / (Total # of training examples from this class =
 				numOfTrainingExamples[digit being classified(determined by the loop number)] + 2 * smoothingConstant)
 		*/
 
-		for (int j = 0; j < 10; j++)
+		if (featureSetDisjoint == true)
 		{
-			for (int k = 0; k < 28; k++)
+			for (int j = 0; j < 10; j++)
 			{
-				for (int l = 0; l < 28; l++)
+				for (int k = 0; k < (28 / m); k++)
 				{
-					pixelProbability[j][k][l] = (pixelCountMatrices[j][k][l] + smoothingConstant)
-						/ (numOfTrainingExamples[j] + 2 * smoothingConstant);
+					for (int l = 0; l < (28 / n); l++)
+					{
+						for (int a = 0; a < pow(2, (m * n)); a++)
+						{
+							pixelGroupProbability[j][k][l][a] = (pixelGroupCountMatrices[j][k][l][a] + smoothingConstant)
+								/ (numOfTrainingExamples[j] + 2 * smoothingConstant);
+						}
+					}
+				}
+			}
+		}
+		else if (featureSetOverlapping == true)
+		{
+			for (int j = 0; j < 10; j++)
+			{
+				for (int k = 0; k < (29 - m); k++)
+				{
+					for (int l = 0; l < (29 - n); l++)
+					{
+						for (int a = 0; a < pow(2, (m * n)); a++)
+						{
+							pixelGroupProbability[j][k][l][a] = (pixelGroupCountMatrices[j][k][l][a] + smoothingConstant)
+								/ (numOfTrainingExamples[j] + 2 * smoothingConstant);
+						}
+					}
 				}
 			}
 		}
 
 		/*
 		Loop 10 times:
-		For each loop, update each digit in priorProbability : priorProbability[loop number]
-			= numOfTrainingExamples[loop number] / 5000
+			Update each digit in priorProbability:
+			priorProbability[loop number] = numOfTrainingExamples[loop number] / 5000
 		*/
 
 		for (int j = 0; j < 10; j++)
@@ -293,11 +453,56 @@ void pixelGroupClassifier::trainModel()
 	//Close data files.
 	dataFileInTrainingImages.close();
 	dataFileInTrainingLabels.close();
+
+	//Deallocate memory.
+	if (featureSetDisjoint == true)
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < (28 / m); j++)
+			{
+				for (int k = 0; k < (28 / n); k++)
+				{
+					delete[] pixelGroupCountMatrices[i][j][k];
+					pixelGroupCountMatrices[i][j][k] = NULL;
+				}
+
+				delete[] pixelGroupCountMatrices[i][j];
+				pixelGroupCountMatrices[i][j] = NULL;
+			}
+
+			delete[] pixelGroupCountMatrices[i];
+			pixelGroupCountMatrices[i] = NULL;
+		}
+	}
+	else if (featureSetOverlapping == true)
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < (29 - m); j++)
+			{
+				for (int k = 0; k < (29 - n); k++)
+				{
+					delete[] pixelGroupCountMatrices[i][j][k];
+					pixelGroupCountMatrices[i][j][k] = NULL;
+				}
+
+				delete[] pixelGroupCountMatrices[i][j];
+				pixelGroupCountMatrices[i][j] = NULL;
+			}
+
+			delete[] pixelGroupCountMatrices[i];
+			pixelGroupCountMatrices[i] = NULL;
+		}
+	}
+
+	delete[] pixelGroupCountMatrices;
+	pixelGroupCountMatrices = NULL;
 }
 
 void pixelGroupClassifier::testModel()
 {
-	//A temporary array of twenty - eight(28) 28 - char - length strings to find that image’s posterior probability
+	//A temporary array of twenty-eight (28) 28 char-length strings to find that image’s posterior probability
 	char nextTestImage[28][28];
 
 	int nextLabel;
@@ -308,14 +513,17 @@ void pixelGroupClassifier::testModel()
 				Read in next 28 lines from digit data test images file into nextTestImage.
 				Read in the next digit from the test labels file into testLabels[testDigitcount].
 				numOfTestExamples[testLabels[testDigitCount]] += 1
-				Implement the formula P(class) ∙ P(f1,1 | class) ∙ P(f1,2 | class) ∙ ... ∙ P(f28,28 | class) to find posterior probabilities:
+
+				Note: Exact implementation following is out of date since it came from Part 1.
+
+				Implement the formula P(class) ∙ P(G1,1 | class) ∙ P(G1,2 | class) ∙ ... ∙ P(G...,... | class) to find posterior probabilities:
 				Comment: Change these values to logs as the assignment description says, if underflow occurs
 				(and add instead—see assignment description for formula.).
 					double pixelProduct = 1;
 						Comment: pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
 					Loop 10 times (i):
-						Loop 28 times (j):
-							Loop 28 times (k):
+						Loop ... times (j):
+							Loop ... times (k):
 								If nextTestImage[j, k] == “ “:
 									pixelProduct = pixelProduct * (1 - pixelProbability[i, j, k])
 								Else if nextTestImage[j, k] == “+“ or “#”:
@@ -359,19 +567,20 @@ void pixelGroupClassifier::testModel()
 		numOfTestExamples[testLabels[i]] += 1;
 
 		/*
-		Implement the formula P(class) ∙ P(f1,1 | class) ∙ P(f1,2 | class) ∙ ... ∙ P(f28,28 | class) to find posterior probabilities:
+		Note: Exact implementation following is out of date since it came from Part 1.
+		Implement the formula P(class) ∙ P(G1,1 | class) ∙ P(G1,2 | class) ∙ ... ∙ P(G...,... | class) to find posterior probabilities:
 		Comment: Change these values to logs as the assignment description says, if underflow occurs
 		(and add instead—see assignment description for formula.).
 			double pixelProduct = 1;
 				Comment: pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
 			Loop 10 times (i):
-				Loop 28 times (j):
-					Loop 28 times (k):
+				Loop ... times (j):
+					Loop ... times (k):
 						If nextTestImage[j, k] == “ “:
 							pixelProduct = pixelProduct * (1 - pixelProbability[i, j, k])
 						Else if nextTestImage[j, k] == “+“ or “#”:
-							pixelProduct = pixelProduct * pixelProbability[i, j, k]
-				testDigitProbability[testDigitCount, i] = priorProbability[i] * pixelProduct
+							pixelProduct = pixelProduct * pixelGroupProbability[i, j, k]
+				posteriorProbability[testDigitCount, i] = pixelGroupProbability[i] * pixelProduct
 
 		Note that in the implementation of the probability formula to find posterior probabilities for each class (digit) below,
 		I had to add the logs of the probabilities instead of the multiplying the probabilities to avoid underflow;
@@ -383,31 +592,61 @@ void pixelGroupClassifier::testModel()
 		for (int j = 0; j < 10; j++)
 		{
 			//pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
-			double pixelProduct = 0;
+			double pixelGroupProduct = 0;
 
-			for (int k = 0; k < 28; k++)
+			if (featureSetDisjoint == true)
 			{
-				for (int l = 0; l < 28; l++)
+				for (int k = 0; k < (28 / m); k++)
 				{
-					if (nextTestImage[k][l] == ' ')
+					for (int l = 0; l < (28 / n); l++)
 					{
-						pixelProduct = pixelProduct - log(1 - pixelProbability[j][k][l]);
+						//Put here instead of in following for loop to save time.
+						int tempPixelGroupNumber = getPixelGroupNumber(nextTestImage, (k * m), (l * n));
+
+						for (int a = 0; a < pow(2, (m * n)); a++)
+						{
+							if (tempPixelGroupNumber != a)
+							{
+								pixelGroupProduct = pixelGroupProduct - log(1 - pixelGroupProbability[j][k][l][a]);
+							}
+							else //if (tempPixelGroupNumber == a)
+							{
+								pixelGroupProduct = pixelGroupProduct - log(pixelGroupProbability[j][k][l][a]);
+							}
+						}
 					}
-					else if (nextTestImage[k][l] == '+' || nextTestImage[k][l] == '#')
+				}
+			}
+			else if (featureSetOverlapping == true)
+			{
+				for (int k = 0; k < (29 - m); k++)
+				{
+					for (int l = 0; l < (29 - n); l++)
 					{
-						pixelProduct = pixelProduct - log(pixelProbability[j][k][l]);
+						//Put here instead of in following for loop to save time.
+						int tempPixelGroupNumber = getPixelGroupNumber(nextTestImage, k, l);
+
+						for (int a = 0; a < pow(2, (m * n)); a++)
+						{
+							if (tempPixelGroupNumber != a)
+							{
+								pixelGroupProduct = pixelGroupProduct - log(1 - pixelGroupProbability[j][k][l][a]);
+							}
+							else //if (tempPixelGroupNumber == a)
+							{
+								pixelGroupProduct = pixelGroupProduct - log(pixelGroupProbability[j][k][l][a]);
+							}
+						}
 					}
 				}
 			}
 
-			testDigitProbability[i][j] = pixelProduct + log(priorProbability[j]);
+			posteriorProbability[i][j] = pixelGroupProduct - log(priorProbability[j]);
 
-			if (testDigitProbability[i][j] > maxLog)
+			if (posteriorProbability[i][j] > maxLog)
 			{
-				maxLog = testDigitProbability[i][j];
+				maxLog = posteriorProbability[i][j];
 			}
-
-			testDigitProbability[i][j] = testDigitProbability[i][j];
 		}
 	}
 
@@ -415,8 +654,8 @@ void pixelGroupClassifier::testModel()
 	{
 		for (int j = 0; j < 10; j++)
 		{
-			testDigitProbability[i][j] = testDigitProbability[i][j] / maxLog;
-			testDigitProbability[i][j] = 1 - testDigitProbability[i][j];
+			posteriorProbability[i][j] = posteriorProbability[i][j] / maxLog;
+			posteriorProbability[i][j] = 1 - posteriorProbability[i][j];
 		}
 	}
 
@@ -450,9 +689,9 @@ void pixelGroupClassifier::evaluateModel()
 
 		for (int j = 0; j < 10; j++)
 		{
-			if (testDigitProbability[i][j] > max)
+			if (posteriorProbability[i][j] > max)
 			{
-				max = testDigitProbability[i][j];
+				max = posteriorProbability[i][j];
 				locOfMax = j;
 			}
 		}
@@ -475,8 +714,7 @@ void pixelGroupClassifier::evaluateModel()
 void pixelGroupClassifier::printEvaluation()
 {
 	/*
-	Print to screen totalClassificationRate, digitClassificationRate[] for each digit, and confusionMatrix.
-	Of course, make it readable and labeled so that the user can understand the results.
+	Print to screen totalClassificationRate and digitClassificationRate[] for each digit.
 	*/
 
 	cout.unsetf(std::ios_base::floatfield);
@@ -494,4 +732,27 @@ void pixelGroupClassifier::printEvaluation()
 	cout << "Digit 8 classification rate: " << digitClassificationRate[8] << endl;
 	cout << "Digit 9 classification rate: " << digitClassificationRate[9] << endl;
 	cout << endl;
+}
+
+//pixeGroupNumber: a unique value corresponding to the combination of pixels that make up the pixel group
+int pixelGroupClassifier::getPixelGroupNumber(char nextTrainingImage[28][28], int topLeftRow, int topLeftCol)
+{
+	string pixelGroupCombination = "";
+
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			if (nextTrainingImage[topLeftRow + 1][topLeftCol + 1] == ' ')
+			{
+				pixelGroupCombination.append("0");
+			}
+			else
+			{
+				pixelGroupCombination.append("1");
+			}
+		}
+	}
+
+	return stoi(pixelGroupCombination, 0, 2);
 }
