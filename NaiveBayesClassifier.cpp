@@ -58,7 +58,7 @@ void singlePixels()
 
 	do
 	{
-		double smoothingConstant = 0;
+		float smoothingConstant = 0;
 
 		//Retrieve smoothingConstant from user.
 		//Parameter check : must be between 0.1 and 10, inclusive.
@@ -118,7 +118,7 @@ void pixelGroups()
 
 			do
 			{
-				double smoothingConstant = 0;
+				float smoothingConstant = 0;
 
 				//Retrieve smoothingConstant from user.
 				//Parameter check : must be between 0.1 and 10, inclusive.
@@ -167,7 +167,7 @@ void pixelGroups()
 
 void pixelGroupsAllFeatureSets()
 {
-	double smoothingConstant = 0;
+	float smoothingConstant = 0;
 
 	//Retrieve smoothingConstant from user.
 	//Parameter check : must be between 0.1 and 10, inclusive.

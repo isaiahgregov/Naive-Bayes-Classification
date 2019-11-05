@@ -13,7 +13,7 @@ using namespace std;
 //--------------Constructors and Destructor-------------------------------------*
 //*******************************************************************************
 
-pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatureSet)
+pixelGroupClassifier::pixelGroupClassifier(float fSmoothingConstant, int fFeatureSet)
 {
 	smoothingConstant = fSmoothingConstant;
 
@@ -108,6 +108,8 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 		break;
 	}
 
+	numOfFeatureValues = pow(2, (m * n));
+
 	totalClassificationRate = 0;
 
 	for (int i = 0; i < 10; i++)
@@ -143,29 +145,29 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 	{
 		if (featureSetDisjoint == true)
 		{
-			pixelGroupProbability[i] = new double** [28 / m];
+			pixelGroupProbability[i] = new float** [28 / m];
 
 			for (int j = 0; j < (28 / m); j++)
 			{
-				pixelGroupProbability[i][j] = new double* [28 / n];
+				pixelGroupProbability[i][j] = new float* [28 / n];
 
 				for (int k = 0; k < (28 / n); k++)
 				{
-					pixelGroupProbability[i][j][k] = new double [pow(2, (m * n))];
+					pixelGroupProbability[i][j][k] = new float [numOfFeatureValues];
 				}
 			}
 		}
 		else if (featureSetOverlapping == true)
 		{
-			pixelGroupProbability[i] = new double** [29 - m];
+			pixelGroupProbability[i] = new float** [29 - m];
 
 			for (int j = 0; j < (29 - m); j++)
 			{
-				pixelGroupProbability[i][j] = new double* [29 - n];
+				pixelGroupProbability[i][j] = new float* [29 - n];
 
 				for (int k = 0; k < (29 - n); k++)
 				{
-					pixelGroupProbability[i][j][k] = new double[pow(2, (m * n))];
+					pixelGroupProbability[i][j][k] = new float[numOfFeatureValues];
 				}
 			}
 		}
@@ -179,7 +181,7 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 			for (int i = 0; i < 10; i++)
 				for (int j = 0; j < (28 / m); j++)
 					for (int k = 0; k < (28 / n); k++)
-						for (int l = 0; l < pow(2, (m * n)); l++)
+						for (int l = 0; l < numOfFeatureValues; l++)
 							pixelGroupProbability[i][j][k][l] = 0;
 		}
 		else if (featureSetOverlapping == true)
@@ -187,7 +189,7 @@ pixelGroupClassifier::pixelGroupClassifier(double fSmoothingConstant, int fFeatu
 			for (int i = 0; i < 10; i++)
 				for (int j = 0; j < (29 - m); j++)
 					for (int k = 0; k < (29 - n); k++)
-						for (int l = 0; l < pow(2, (m * n)); l++)
+						for (int l = 0; l < numOfFeatureValues; l++)
 							pixelGroupProbability[i][j][k][l] = 0;
 		}
 	}
@@ -255,36 +257,36 @@ void pixelGroupClassifier::trainModel()
 	//An array of ten (10) ... x ... x 16 float-type matrices to keep count of the number of times a pixel group is 
 	//“in the foreground” / “counts” for a digit, for each digit. Each element of this array corresponds
 	//to each digit from 0 - 9. It is a float or double type for laplace smoothing.
-	double**** pixelGroupCountMatrices = new double*** [10];
+	float**** pixelGroupCountMatrices = new float*** [10];
 
 	//Dynamically allocate the rest of the 3D array.
 	for (int i = 0; i < 10; i++)
 	{
 		if (featureSetDisjoint == true)
 		{
-			pixelGroupCountMatrices[i] = new double** [28 / m];
+			pixelGroupCountMatrices[i] = new float** [28 / m];
 
 			for (int j = 0; j < (28 / m); j++)
 			{
-				pixelGroupCountMatrices[i][j] = new double* [28 / n];
+				pixelGroupCountMatrices[i][j] = new float* [28 / n];
 
 				for (int k = 0; k < (28 / n); k++)
 				{
-					pixelGroupCountMatrices[i][j][k] = new double[pow(2, (m * n))];
+					pixelGroupCountMatrices[i][j][k] = new float[numOfFeatureValues];
 				}
 			}
 		}
 		else if (featureSetOverlapping == true)
 		{
-			pixelGroupCountMatrices[i] = new double** [29 - m];
+			pixelGroupCountMatrices[i] = new float** [29 - m];
 
 			for (int j = 0; j < (29 - m); j++)
 			{
-				pixelGroupCountMatrices[i][j] = new double* [29 - n];
+				pixelGroupCountMatrices[i][j] = new float* [29 - n];
 
 				for (int k = 0; k < (29 - n); k++)
 				{
-					pixelGroupCountMatrices[i][j][k] = new double[pow(2, (m * n))];
+					pixelGroupCountMatrices[i][j][k] = new float[numOfFeatureValues];
 				}
 			}
 		}
@@ -298,7 +300,7 @@ void pixelGroupClassifier::trainModel()
 			for (int i = 0; i < 10; i++)
 				for (int j = 0; j < (28 / m); j++)
 					for (int k = 0; k < (28 / n); k++)
-						for (int l = 0; l < pow(2, (m * n)); l++)
+						for (int l = 0; l < numOfFeatureValues; l++)
 							pixelGroupCountMatrices[i][j][k][l] = 0;
 		}
 		else if (featureSetOverlapping == true)
@@ -306,7 +308,7 @@ void pixelGroupClassifier::trainModel()
 			for (int i = 0; i < 10; i++)
 				for (int j = 0; j < (29 - m); j++)
 					for (int k = 0; k < (29 - n); k++)
-						for (int l = 0; l < pow(2, (m * n)); l++)
+						for (int l = 0; l < numOfFeatureValues; l++)
 							pixelGroupCountMatrices[i][j][k][l] = 0;
 		}
 	}
@@ -411,10 +413,10 @@ void pixelGroupClassifier::trainModel()
 				{
 					for (int l = 0; l < (28 / n); l++)
 					{
-						for (int a = 0; a < pow(2, (m * n)); a++)
+						for (int a = 0; a < numOfFeatureValues; a++)
 						{
 							pixelGroupProbability[j][k][l][a] = (pixelGroupCountMatrices[j][k][l][a] + smoothingConstant)
-								/ (numOfTrainingExamples[j] + 2 * smoothingConstant);
+								/ (numOfTrainingExamples[j] + numOfFeatureValues * smoothingConstant);
 						}
 					}
 				}
@@ -428,10 +430,10 @@ void pixelGroupClassifier::trainModel()
 				{
 					for (int l = 0; l < (29 - n); l++)
 					{
-						for (int a = 0; a < pow(2, (m * n)); a++)
+						for (int a = 0; a < numOfFeatureValues; a++)
 						{
 							pixelGroupProbability[j][k][l][a] = (pixelGroupCountMatrices[j][k][l][a] + smoothingConstant)
-								/ (numOfTrainingExamples[j] + 2 * smoothingConstant);
+								/ (numOfTrainingExamples[j] + numOfFeatureValues * smoothingConstant);
 						}
 					}
 				}
@@ -446,7 +448,7 @@ void pixelGroupClassifier::trainModel()
 
 		for (int j = 0; j < 10; j++)
 		{
-			priorProbability[j] = (double)numOfTrainingExamples[j] / (double)5000;
+			priorProbability[j] = (float)numOfTrainingExamples[j] / (float)5000;
 		}
 	}
 
@@ -519,7 +521,7 @@ void pixelGroupClassifier::testModel()
 				Implement the formula P(class) ∙ P(G1,1 | class) ∙ P(G1,2 | class) ∙ ... ∙ P(G...,... | class) to find posterior probabilities:
 				Comment: Change these values to logs as the assignment description says, if underflow occurs
 				(and add instead—see assignment description for formula.).
-					double pixelProduct = 1;
+					float pixelProduct = 1;
 						Comment: pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
 					Loop 10 times (i):
 						Loop ... times (j):
@@ -542,7 +544,7 @@ void pixelGroupClassifier::testModel()
 	//Strings used for processing input from data files.
 	string nextLine1, nextLine2;
 
-	double maxLog = 0;
+	float maxLog = 0;
 
 	for (int i = 0; i < 1000; i++)
 	{
@@ -571,7 +573,7 @@ void pixelGroupClassifier::testModel()
 		Implement the formula P(class) ∙ P(G1,1 | class) ∙ P(G1,2 | class) ∙ ... ∙ P(G...,... | class) to find posterior probabilities:
 		Comment: Change these values to logs as the assignment description says, if underflow occurs
 		(and add instead—see assignment description for formula.).
-			double pixelProduct = 1;
+			float pixelProduct = 1;
 				Comment: pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
 			Loop 10 times (i):
 				Loop ... times (j):
@@ -592,7 +594,7 @@ void pixelGroupClassifier::testModel()
 		for (int j = 0; j < 10; j++)
 		{
 			//pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
-			double pixelGroupProduct = 0;
+			float pixelGroupProduct = 0;
 
 			if (featureSetDisjoint == true)
 			{
@@ -603,7 +605,7 @@ void pixelGroupClassifier::testModel()
 						//Put here instead of in following for loop to save time.
 						int tempPixelGroupNumber = getPixelGroupNumber(nextTestImage, (k * m), (l * n));
 
-						for (int a = 0; a < pow(2, (m * n)); a++)
+						for (int a = 0; a < numOfFeatureValues; a++)
 						{
 							if (tempPixelGroupNumber != a)
 							{
@@ -626,7 +628,7 @@ void pixelGroupClassifier::testModel()
 						//Put here instead of in following for loop to save time.
 						int tempPixelGroupNumber = getPixelGroupNumber(nextTestImage, k, l);
 
-						for (int a = 0; a < pow(2, (m * n)); a++)
+						for (int a = 0; a < numOfFeatureValues; a++)
 						{
 							if (tempPixelGroupNumber != a)
 							{
@@ -685,7 +687,7 @@ void pixelGroupClassifier::evaluateModel()
 	for (int i = 0; i < 1000; i++)
 	{
 		int locOfMax = 0;
-		double max = 0;
+		float max = 0;
 
 		for (int j = 0; j < 10; j++)
 		{
@@ -703,11 +705,11 @@ void pixelGroupClassifier::evaluateModel()
 		}
 	}
 
-	totalClassificationRate = (double)numTotalTestDigitsCorrect / 1000.0;
+	totalClassificationRate = (float)numTotalTestDigitsCorrect / 1000.0;
 
 	for (int i = 0; i < 10; i++)
 	{
-		digitClassificationRate[i] = (double)numEachTestDigitCorrect[i] / (double)numOfTestExamples[i];
+		digitClassificationRate[i] = (float)numEachTestDigitCorrect[i] / (float)numOfTestExamples[i];
 	}
 }
 

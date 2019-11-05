@@ -16,7 +16,7 @@ using namespace std;
 //--------------Constructors and Destructor-------------------------------------*
 //*******************************************************************************
 
-naiveBayesDigitClassifier::naiveBayesDigitClassifier(double fSmoothingConstant)
+naiveBayesDigitClassifier::naiveBayesDigitClassifier(float fSmoothingConstant)
 {
 	smoothingConstant = fSmoothingConstant;
 	totalClassificationRate = 0;
@@ -87,7 +87,7 @@ void naiveBayesDigitClassifier::trainModel()
 	//An array of ten(10) 28 x 28 float - type matrices to keep count of the number of times a pixel is 
 	//“in the foreground” / “counts” for a digit, for each digit.Each element of this array corresponds
 	//to each digit from 0 - 9. It is a float or double type for laplace smoothing.
-	double pixelCountMatrices[10][28][28];
+	float pixelCountMatrices[10][28][28];
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -202,7 +202,7 @@ void naiveBayesDigitClassifier::trainModel()
 
 		for (int j = 0; j < 10; j++)
 		{
-			priorProbability[j] = (double)numOfTrainingExamples[j] / (double)5000;
+			priorProbability[j] = (float)numOfTrainingExamples[j] / (float)5000;
 		}
 	}
 
@@ -227,7 +227,7 @@ void naiveBayesDigitClassifier::testModel()
 				Implement the formula P(class) ∙ P(f1,1 | class) ∙ P(f1,2 | class) ∙ ... ∙ P(f28,28 | class) to find posterior probabilities:
 				Comment: Change these values to logs as the assignment description says, if underflow occurs
 				(and add instead—see assignment description for formula.).
-					double pixelProduct = 1;
+					float pixelProduct = 1;
 						Comment: pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
 					Loop 10 times (i):
 						Loop 28 times (j):
@@ -250,7 +250,7 @@ void naiveBayesDigitClassifier::testModel()
 	//Strings used for processing input from data files.
 	string nextLine1, nextLine2;
 
-	double maxLog = 0;
+	float maxLog = 0;
 
 	for (int i = 0; i < 1000; i++)
 	{
@@ -278,7 +278,7 @@ void naiveBayesDigitClassifier::testModel()
 		Implement the formula P(class) ∙ P(f1,1 | class) ∙ P(f1,2 | class) ∙ ... ∙ P(f28,28 | class) to find posterior probabilities:
 		Comment: Change these values to logs as the assignment description says, if underflow occurs
 		(and add instead—see assignment description for formula.).
-			double pixelProduct = 1;
+			float pixelProduct = 1;
 				Comment: pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
 			Loop 10 times (i):
 				Loop 28 times (j):
@@ -299,7 +299,7 @@ void naiveBayesDigitClassifier::testModel()
 		for (int j = 0; j < 10; j++)
 		{
 			//pixelProduct is a temporary value to hold the latter portion of the product of the above formula.
-			double pixelProduct = 0;
+			float pixelProduct = 0;
 
 			for (int k = 0; k < 28; k++)
 			{
@@ -360,7 +360,7 @@ void naiveBayesDigitClassifier::evaluateModel()
 	for (int i = 0; i < 1000; i++)
 	{
 		int locOfMax = 0;
-		double max = 0;
+		float max = 0;
 
 		for (int j = 0; j < 10; j++)
 		{
@@ -384,15 +384,15 @@ void naiveBayesDigitClassifier::evaluateModel()
 	{
 		for (int j = 0; j < 10; j++)
 		{
-			confusionMatrix[i][j] = confusionMatrix[i][j] / (double)numOfTestExamples[i];
+			confusionMatrix[i][j] = confusionMatrix[i][j] / (float)numOfTestExamples[i];
 		}
 	}
 
-	totalClassificationRate = (double)numTotalTestDigitsCorrect / 1000.0;
+	totalClassificationRate = (float)numTotalTestDigitsCorrect / 1000.0;
 
 	for (int i = 0; i < 10; i++)
 	{
-		digitClassificationRate[i] = (double)numEachTestDigitCorrect[i] / (double)numOfTestExamples[i];
+		digitClassificationRate[i] = (float)numEachTestDigitCorrect[i] / (float)numOfTestExamples[i];
 	}
 }
 
@@ -455,8 +455,8 @@ void naiveBayesDigitClassifier::printClassificationRateAndConfusionMatrix()
 	would just be picked in place of the previous one.
 	*/
 
-	double testDigitMaxProbability[10];
-	double testDigitMinProbability[10];
+	float testDigitMaxProbability[10];
+	float testDigitMinProbability[10];
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -555,7 +555,7 @@ void naiveBayesDigitClassifier::printClassificationRateAndConfusionMatrix()
 
 void naiveBayesDigitClassifier::printFeatureLikelihoodsAndOddsRatios()
 {
-	double pixelOdds[10][10][28][28];
+	float pixelOdds[10][10][28][28];
 
 	//The odds that a pixel belongs to one or the other class:
 	//odds(Fij = 1, c1, c2) = P(Fij = 1 | c1) / P(Fij = 1 | c2)
@@ -568,10 +568,10 @@ void naiveBayesDigitClassifier::printFeatureLikelihoodsAndOddsRatios()
 	int max3Col;
 	int max4Row;
 	int max4Col;
-	double confusionMax1 = 0.0;
-	double confusionMax2 = 0.0;
-	double confusionMax3 = 0.0;
-	double confusionMax4 = 0.0;
+	float confusionMax1 = 0.0;
+	float confusionMax2 = 0.0;
+	float confusionMax3 = 0.0;
+	float confusionMax4 = 0.0;
 
 	//Find four pairs of digits that have the highest confusion rates according to the confusion matrix.
 
@@ -680,7 +680,7 @@ void naiveBayesDigitClassifier::printFeatureLikelihoodsAndOddsRatios()
 	displayFeatureLikelihoodsAndOddsRatiosMaps(pixelOdds, max4Row, max4Col);
 }
 
-void naiveBayesDigitClassifier::displayFeatureLikelihoodsAndOddsRatiosMaps(double pixelOdds[10][10][28][28], int maxRow, int maxCol)
+void naiveBayesDigitClassifier::displayFeatureLikelihoodsAndOddsRatiosMaps(float pixelOdds[10][10][28][28], int maxRow, int maxCol)
 {
 	cout << "Feature likelihood for digit " << maxRow << ":\t\t"
 		<< "Feature likelihood for digit " << maxCol << ":\t\t"
