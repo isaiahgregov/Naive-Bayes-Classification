@@ -4,7 +4,7 @@ For Parts 1 and 2 of the assignment
 
 This is a digit classifier coded in C++. I could have done it in MATLAB or Python, but because I wasn't sure how the probability formula was supposed to work, I used the language I was most familiar with. Note that in the implementation of the probability formula to find posterior probabilities for each class (digit), I had to add the logs of the probabilities instead of the multiplying the probabilities to avoid underflow; then since for a probability (which is a value between 0 and 1) a lower probability increases the negative of its log and a higher probability decreases the negative of its logs, I added the negative of the logs and then subtracted the total from 1 to find a proportional probability in regard to each class for each class.
 
-Run in Visual Studio 2019. Keep training and testing data files in same directory that the program runs in (the same directory where the code files are located).
+Run in Visual Studio 2019. Keep training and testing data files in same directory that the program runs in (the same directory where the code files are located). Run as an x64 program (program for x64 computer) or you will get a bad allocation exception when running pixel group feature number 8 (Overlapping 4x4), since this pixel group feature set requires the most memory; so in Visual Studio, select the x64 option for debugging to run it.
 
 Training and Testing Data Files Descriptions
 
