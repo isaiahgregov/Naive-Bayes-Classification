@@ -1,5 +1,13 @@
 // NaiveBayesClassifier.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+
+/*
+Keep trainingand testing data files in same directory that the program runs in
+(the same directory where the code files are located). Run as an x64 program
+(program for x64 computer) or you will get a bad allocation exception when running
+pixel group feature number 8 (Overlapping 4x4), since this pixel group feature set
+requires the most memory; so in Visual Studio, select the x64 option for debugging
+to run it.
+*/
 
 #include <iostream>
 #include <string> //to capture user input
