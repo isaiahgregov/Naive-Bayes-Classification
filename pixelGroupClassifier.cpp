@@ -745,7 +745,7 @@ int pixelGroupClassifier::getPixelGroupNumber(char nextTrainingImage[28][28], in
 	{
 		for (int j = 0; j < n; j++)
 		{
-			if (nextTrainingImage[topLeftRow + 1][topLeftCol + 1] == ' ')
+			if (nextTrainingImage[topLeftRow + i][topLeftCol + j] == ' ')
 			{
 				pixelGroupCombination.append("0");
 			}
