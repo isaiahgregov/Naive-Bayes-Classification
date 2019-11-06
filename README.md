@@ -12,7 +12,9 @@ https://en.wikipedia.org/wiki/Log_probability
 Note: "continue;" statements are added in the switch statement in main to avoid running the 4x4 features sets in the auto run main menu option because of these running times (on my computer). You can comment these out if you'd like to run either or both of the 4x4 sets:
 
 6.29 hours for all runs
+
 0.6 hours for all runs except 4x4 Overlapping
+
 9.4 minutes for all runs except 4x4 Disjoint and 4x4 Overlapping
 
 Training and Testing Data Files Descriptions
