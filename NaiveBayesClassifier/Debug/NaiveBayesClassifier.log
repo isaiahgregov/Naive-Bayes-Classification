@@ -1,0 +1,6 @@
+﻿  NaiveBayesClassifier.cpp
+  pixelGroupClassifier.cpp
+C:\Users\grano\source\repos\NaiveBayesClassifier\NaiveBayesClassifier\pixelGroupClassifier.cpp(111,26): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  Generating Code...
+C:\Users\grano\source\repos\NaiveBayesClassifier\NaiveBayesClassifier\pixelGroupClassifier.cpp(711,61): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  NaiveBayesClassifier.vcxproj -> C:\Users\grano\source\repos\NaiveBayesClassifier\Debug\NaiveBayesClassifier.exe
