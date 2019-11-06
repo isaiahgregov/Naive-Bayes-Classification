@@ -9,6 +9,12 @@ Note: The posterior probabilities of classes do not sum to 1 for each test digit
 
 https://en.wikipedia.org/wiki/Log_probability
 
+Note: "continue;" statements are added in the switch statement in main to avoid running the 4x4 features sets in the auto run main menu option because of these running times (on my computer). You can comment these out if you'd like to run either or both of the 4x4 sets:
+
+6.29 hours for all runs
+0.6 hours for all runs except 4x4 Overlapping
+9.4 minutes for all runs except 4x4 Disjoint and 4x4 Overlapping
+
 Training and Testing Data Files Descriptions
 
 trainingimages: 5000 training digits, around 500 samples from each digit class. Each digit is of size 28x28, and the digits are concatenated together vertically. The file is in ASCII format, with three possible characters. ' ' means a white (background) pixel, '+' means a gray pixel, and '#' means a black (foreground) pixel.
